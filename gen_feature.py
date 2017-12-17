@@ -82,18 +82,36 @@ def _get_user_feature(user_sum={}):
         ret.update({k:tmp})
 
     return ret
+ def _get_item_feature(item_sum={}):
+     if not item_sum:
+         return {}
+     ret = {}
+     for k, v in item_sum.iteritems():
+         total = sum(v) if isinstance(v, list) else 1.0
+         tmp = {}
+         if v[4] == 0:
+             buy_total_rate,buy_cart_rate,buy_keep_rate,buy_review_rate  = [0.0]*4
+         else:
+             buy_total_rate = total/v[4]
+             buy_cart_rate = v[3]/v[4]
+             buy_keep_rate = v[2]/v[4]
+             buy_review_rate = v[1]/v[4]
+         tmp.update({'itotal_behavior':total,
+                     'ibuy_behavior':v[4],
+                     'ibuy_total_rate':buy_total_rate,
+                     'ibuy_cart_rate':buy_cart_rate,
+                     'ibuy_keep_rate':buy_keep_rate,
+                     'ibuy_review_rate':buy_review_rate})
+         ret.update({k:tmp})
+     return ret
+ 
+ feature_map = {
+         'total_behavior':_total_behavior,
+         'buy_behavior':_total_buy,
+         'buy_total_rate':_buy_total_rate,
+         'buy_cart_rate':_buy_cart_rate
+ }
 
-def _get_item_feature(item_sum={}):
-    if not item_sum:
-        return {}
-    ret = {}
-    for k, v in item_sum.iteritems():
-        total = sum(v) if isinstance(v, list) else 1.0
-        tmp = {}
-        buy_total_rate = v[4]/total
-        tmp.update({'itotal_rate':buy_total_rate})
-        ret.update({k:tmp})
-    return ret
 
 feature_map = {
 	'total_behavior':_total_behavior,
@@ -155,7 +173,8 @@ def get_feature(ui_features=[],*args, **kwargs):
             tmp = user_feature.get(item.get('user_id'))
             item.update(tmp)
 
-	keys = ['user_id','item_id','buy'] + ui_features+['utotal_behavior','ubuy_behavior','ubuy_total_rate','ubuy_cart_rate','ubuy_keep_rate','ubuy_review_rate']
+	keys = ['user_id','item_id','buy'] + ui_features+['utotal_behavior','ubuy_behavior','ubuy_total_rate','ubuy_cart_rate','ubuy_keep_rate','ubuy_review_rate']+['itotal_behavior','ibuy_behavior','ibuy_total_rate','ibuy_cart_rate','ibuy_keep_rate','ibuy_review_rate']
+
 	write_csv_from_list_of_dict(ret_feature, keys, '{0}.csv'.format(start_date))
 	return user_feature
 
